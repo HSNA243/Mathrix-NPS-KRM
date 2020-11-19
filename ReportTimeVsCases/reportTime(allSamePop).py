@@ -11,7 +11,7 @@ df = df.replace(to_replace="Alive", value=0)
 df = df.replace(to_replace="Dead", value=1)
 
 df1 = df_pop.loc[(df_pop["Population"] <= 7250) & (df_pop["Population"] >= 6750)].reset_index()
-print(df1)
+#print(df1)
 zones = []
 
 for i in range(len(df1)):
@@ -21,19 +21,54 @@ print(zones)
 report = []
 avg = []
 maxi = []
+most = 0
+most_ind = []
 
 for zone in zones:
     times = []
+    num_cases = len(df.loc[(df["x location"] == zone[0]) & (df["y location"] == zone[1])])
+    if num_cases > most:
+        most = num_cases
+        most_ind = zone
     for i in range(1, 8):
          times.append(len(df.loc[(df["x location"] == zone[0]) & (df["y location"] == zone[1]) & (df["Time to report"] == i)]))
     report.append(times)
-print("report: ", report)
+
+#print("report: ", report)
+
+for i in range(1, 8):
+    maxi.append(len(df.loc[(df["x location"] == most_ind[0]) & (df["y location"] == most_ind[1]) & (df["Time to report"] == i)]))
+
 for i in range(7):
     tot = 0
     for j in range(len(df1)):
         tot += report[j][i]
-    avg.append(tot/len(df1))
-print(avg)
+    avg.append(round(tot/len(df1), 2))
+
+# get percentage of people reporting in the first 3 days and after first 3 days
+average = [round(sum(avg[0:3])/sum(avg)*100, 2), round(sum(avg[3:])/sum(avg)*100, 2)]
+m = [round(sum(maxi[0:3])/sum(maxi)*100, 2), round(sum(maxi[3:])/sum(maxi)*100, 2)]
+print("avg:",average, avg)
+print("max:", m, maxi)
+
+fig = plt.figure()
+x_ax = ['<=3 days', '>3days']
+axes = fig.add_axes([0.07,0.07,0.7,0.7])
+axes.set_title("Cases with respect to reporting time(avg) for areas of similar population")
+axes.set_xlabel("Days to report")
+axes.set_ylabel("Percentage of infected population reported")
+axes.bar(x_ax, average)
+plt.show()
+
+fig2 = plt.figure()
+axes = fig2.add_axes([0.07,0.07,0.7,0.7])
+axes.set_title("Cases with respect to reporting time(Highest infection area with similar population)")
+axes.set_xlabel("Days to report")
+axes.set_ylabel("Percentage of infected population reported")
+axes.bar(x_ax, m)
+plt.show()
+
+
 
 '''#df2 = df.groupby(["x location", "y location","Time to report"])["Outcome"].sum().reset_index()
 df3 = df.groupby(["x location", "y location","Time to report"])["Age"].count().reset_index() # just a dummy count to keep a count of the total number of people infected in a zone
